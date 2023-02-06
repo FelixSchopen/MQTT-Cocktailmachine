@@ -3,3 +3,20 @@
     height: 500px;
     font-size: 50px;
 }
+
+ .intro {
+     text-align: center;
+     padding: 0 20px;
+     margin-top: 40px;
+ }
+
+ons-card {
+    cursor: pointer;
+    color: #333;
+    border-bottom-right-radius: 5px;
+}
+
+.card__title,
+.card--material__title {
+    font-size: 20px;
+}

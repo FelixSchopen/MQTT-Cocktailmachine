@@ -1,5 +1,4 @@
 window.onload = function () {
-
     document.getElementById("btn1").addEventListener("click", event => {
         console.log("Button pressed!")
         let xhr = new XMLHttpRequest();
@@ -12,4 +11,6 @@ window.onload = function () {
         }
     });
 }
+
+
 
