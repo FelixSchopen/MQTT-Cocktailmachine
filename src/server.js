@@ -38,25 +38,29 @@ function getIngredient(name) {
     return return_val;
 }
 
-const drinks = [
+let drinks = [
     {name: "Vodka", position:1},
     {name: "Gin", position:2},
     {name: "Tonic Water", position:3},
     {name: "Energie", position:4},
 ]
 
-const ingredients = [
-    {name: "Vodka", amount:40},
-    {name: "Gin", amount:40},
-    {name: "Tonic Water", amount:160},
-    {name: "Energie-Drink", amount:160},
+let ingredients = [
+    {drink: drinks[0], amount:40},
+    {drink: drinks[1], amount:40},
+    {drink: drinks[2], amount:160},
+    {drink: drinks[3], amount:160},
 ]
 
-const cocktails = [
-    {name:"Vodka-Energie", ingredients: [getIngredient("Vodka"), getIngredient("Energie-Drink")]},
-    {name:"Gin-Tonic", ingredients: [getIngredient("Gin"), getIngredient("Tonic Water")]},
-    {name:"Vodka Lemon", ingredients: [getIngredient("Vodka"), getIngredient("Tonic Water")]},
+let cocktails = [
+    {name:"Vodka-Energie", ingredients: [ingredients[0], ingredients[3]]},
+    {name:"Gin-Tonic", ingredients: [ingredients[1], ingredients[2]]},
+    {name:"Vodka Lemon", ingredients: [ingredients[0], ingredients[2]]},
 ]
+
+cocktails.forEach(cocktail =>{
+    cocktail.ingredient_cout  = cocktail.ingredients.length;
+});
 
 
 fs.writeFileSync(path.join(fileDirectory, drinkFile), JSON.stringify(drinks), function (err){
@@ -76,9 +80,13 @@ fs.writeFileSync(path.join(fileDirectory, cocktailFile), JSON.stringify(cocktail
 
 
 
-let drinks_r = JSON.parse(fs.readFileSync(drinkFile, "utf-8"));
-let ingredients_r = JSON.parse(fs.readFileSync(ingredientFile, "utf-8"));
-let cocktails_r = JSON.parse(fs.readFileSync(cocktailFile, "utf-8"));
+let drinks_json = fs.readFileSync(drinkFile, "utf-8");
+let ingredients_json = fs.readFileSync(ingredientFile, "utf-8");
+let cocktails_json = fs.readFileSync(cocktailFile, "utf-8");
+
+let drinks_r = JSON.parse(drinks_json);
+let ingredients_r = JSON.parse(ingredients_json);
+let cocktails_r = JSON.parse(cocktails_json);
 
 console.log(drinks);
 console.log(ingredients);
@@ -87,6 +95,39 @@ console.log(cocktails);
 console.log(drinks_r);
 console.log(ingredients_r);
 console.log(cocktails_r);
+
+/**
+ * Delay function, used between data transmission
+ * to give MCU time to handle data
+ * @param milliseconds
+ * @returns {Promise<unknown>}
+ */
+function sleep(milliseconds) {
+    return new Promise(resolve => setTimeout(resolve, milliseconds));
+}
+
+/**
+ * Send cocktail configurations to MCU
+ * @returns {Promise<void>}
+ */
+async function init(){
+    serial.write("drinks");
+    await sleep(100);
+    serial.write(drinks_json);
+    await sleep(500);
+
+    serial.write("ingredients");
+    await sleep(100);
+    serial.write(ingredients_json);
+    await sleep(500);
+
+    serial.write("cocktails");
+    await sleep(100);
+    serial.write(cocktails_json);
+}
+
+init();
+
 
 server.listen(8080,"192.168.178.122");
 console.log(`Listening on http://192.168.178.122:8080`);
