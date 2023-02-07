@@ -208,7 +208,7 @@ let fillCocktailEditPage = function() {
     const idx = cocktailSettingsIndex;
     const cocktail = cocktails[idx];
     let ingredients = cocktails[idx].ingredients;
-
+    document.getElementById("save").innerHTML = "<ons-button onclick=\"saveCocktail("+idx+")\">Save</ons-button>\n"
     document.getElementById("cocktailName").innerText = cocktail.name;
     let html = "";
     let content = document.getElementById("settingsContent")
@@ -217,7 +217,7 @@ let fillCocktailEditPage = function() {
     html +=
             "<ons-list-item class=\"input-items\">\n" +
             "   <label class=\"center\">\n" +
-            "       <ons-input id=\"name-input\" float maxlength=\"20\" placeholder=\""+cocktail.name+"\"></ons-input>\n" +
+            "       <ons-input id=\"name\" float maxlength=\"20\" placeholder=\""+cocktail.name+"\"></ons-input>\n" +
             "   </label>\n" +
             "</ons-list-item>";
 
@@ -285,13 +285,24 @@ let addIngredient = function(idx){
 /**
  * Save the settings of a specific cocktail
  */
-let saveCocktail = function(){
+let saveCocktail = function(idx){
     let elements = document.getElementById("cocktailSettings").getElementsByTagName("ons-list-item");
     let len = elements.length;
-    for(let i = 0; i<len; i++){
-        console.log(elements[i]);
-    }
+    let name = document.getElementById("name").value;
+    console.log("Cocktail name: " + name);
 
+    let newIngredients = [];
+    let drink;
+    let amount;
+
+    for(let i = 0; i<len-1; i++){
+        let el = document.getElementById("ing"+i);
+        drink = el.value;
+        el = document.getElementById("ingAmount"+i);
+        amount = el.value;
+        console.log("Drink: "+ drink + " Amount: "+ amount)
+        //newIngredients.push()
+    }
 }
 
 /**
