@@ -88,6 +88,7 @@ let drinks_r = JSON.parse(drinks_json);
 let ingredients_r = JSON.parse(ingredients_json);
 let cocktails_r = JSON.parse(cocktails_json);
 
+
 console.log(drinks);
 console.log(ingredients);
 console.log(cocktails);
@@ -140,7 +141,7 @@ server.use("/script", express.static(__dirname + "/script"));
 
 server.get("/", (req, res) => {
     res.status(200);
-    res.sendFile(__dirname + "/html/index.html");
+    res.sendFile(__dirname + "/html/index2.html");
 })
 
 server.get("/btn1", (req, res) => {

@@ -17,7 +17,6 @@
 <ons-navigator id="appNavigator" swipeable swipe-target-width="80px">
     <ons-page>
         <ons-splitter id="appSplitter">
-            <ons-splitter-side id="sidemenu" page="sidemenu.html" swipeable side="right" collapse="" width="260px"></ons-splitter-side>
             <ons-splitter-content page="tabbar.html"></ons-splitter-content>
         </ons-splitter>
     </ons-page>
@@ -26,17 +25,9 @@
 <template id="tabbar.html">
     <ons-page id="tabbar-page">
         <ons-toolbar>
-            <div class="center">Home</div>
+            <div class="center">Cocktails</div>
             <div class="right"><template id="tabbar.html">
                 <ons-page id="tabbar-page">
-                    <ons-toolbar>
-                        <div class="center">Home</div>
-                        <div class="right">
-                            <ons-toolbar-button onclick="fn.toggleMenu()">
-                                <ons-icon icon="ion-ios-menu, material:md-menu"></ons-icon>
-                            </ons-toolbar-button>
-                        </div>
-                    </ons-toolbar>
                     <ons-tabbar swipeable id="appTabbar" position="auto">
                         <ons-tab label="Home" icon="ion-ios-home" page="home.html" active></ons-tab>
                         <ons-tab label="Settings" icon="ion-ios-settings" page="forms.html"></ons-tab>
@@ -45,6 +36,8 @@
 
                     <script>
                         ons.getScriptPage().addEventListener('prechange', function(event) {
+                            fillSettings()
+                            fillCocktails()
                             if (event.target.matches('#appTabbar')) {
                                 event.currentTarget.querySelector('ons-toolbar .center').innerHTML = event.tabItem.getAttribute('label');
                             }
@@ -52,13 +45,10 @@
                     </script>
                 </ons-page>
             </template>
-                <ons-toolbar-button onclick="fn.toggleMenu()">
-                    <ons-icon icon="ion-ios-menu, material:md-menu"></ons-icon>
-                </ons-toolbar-button>
             </div>
         </ons-toolbar>
         <ons-tabbar swipeable id="appTabbar" position="auto">
-            <ons-tab label="Home" icon="ion-ios-home" page="home.html" active></ons-tab>
+            <ons-tab label="Cocktails" icon="ion-ios-home" page="home.html" active></ons-tab>
             <ons-tab label="Settings" icon="ion-ios-settings" page="forms.html"></ons-tab>
             <ons-tab label="Animations" icon="ion-ios-film" page="animations.html"></ons-tab>
         </ons-tabbar>
@@ -66,6 +56,7 @@
         <script>
             ons.getScriptPage().addEventListener('prechange', function(event) {
                 fillSettings()
+                fillCocktails()
                 if (event.target.matches('#appTabbar')) {
                     event.currentTarget.querySelector('ons-toolbar .center').innerHTML = event.tabItem.getAttribute('label');
                 }
@@ -75,26 +66,16 @@
 </template>
 
 <template id="home.html">
-    <ons-page id="cocktails">
-        <ons-card onclick="confirmCocktail()">
-            <div class="title">Vodka Energy</div>
-        </ons-card>
-    </ons-page>
-</template>
-
-<ons-modal direction="up" id="editCocktailModal">
-    <div style="text-align: center">
-        <p>
-            <div id="CocktailSettings">
+    <ons-page id="cocktail-page">
+        <ons-list>
+        <ons-list-header>SELECT COCKTAIL</ons-list-header>
+            <div id="cocktails">
 
             </div>
+        </ons-list>
 
-            <br>
-            <ons-icon tappable onclick="hideCocktailModal()" size="50px" icon="md-check" class="list-item__icon"></ons-icon>
-            <ons-icon tappable onclick="hideCocktailModal()" size="50px" icon="md-close" class="list-item__icon"></ons-icon>
-        </p>
-    </div>
-</ons-modal>
+    </ons-page>
+</template>
 
 <ons-modal direction="up" id="editDrinkModal">
     <div style="text-align: center">
@@ -110,40 +91,16 @@
 </ons-modal>
 
 <template id="forms.html">
-    <ons-page id="forms-page">
+    <ons-page id="settings-page">
         <ons-list>
             <ons-list-header>CHANGE COCKTAIL SETTINGS</ons-list-header>
-            <ons-list-item class="input-items">
-                <label class="center">
-                    Cocktail 1
-                </label>
-                <div class="right">
-                    <ons-icon tappable onclick="editCocktail(0)" icon="md-edit" class="list-item__icon"></ons-icon>
-                    <ons-icon tappable onclick="removeCocktail(0)" icon="md-delete" class="list-item__icon"></ons-icon>
-                </div>
-            </ons-list-item>
-            <ons-list-item class="input-items">
-                <label class="center">
-                    Cocktail 2
-                </label>
-                <div class="right">
-                    <ons-icon tappable onclick="editCocktail(1)" icon="md-edit" class="list-item__icon"></ons-icon>
-                    <ons-icon tappable onclick="removeCocktail(1)" icon="md-delete" class="list-item__icon"></ons-icon>
-                </div>
-            </ons-list-item>
-            <ons-list-item class="input-items">
-                <label class="center">
-                    Cocktail 3
-                </label>
-                <div class="right">
-                    <ons-icon tappable onclick="editCocktail(2)" icon="md-edit" class="list-item__icon"></ons-icon>
-                    <ons-icon tappable onclick="removeCocktail(2)" icon="md-delete" class="list-item__icon"></ons-icon>
-                </div>
-            </ons-list-item>
+            <div id="manageCocktails">
+
+            </div>
 
             <ons-list-header>CHANGE DRINK POSITIONS</ons-list-header>
             <ons-list-item class="input-items">
-                <label class="center" id="pos1">
+                <label class="center" id="pos0">
                 </label>
                 <div class="right">
                     <ons-icon tappable onclick="editDrink(0)" icon="md-edit" class="list-item__icon"></ons-icon>
@@ -151,7 +108,7 @@
                 </div>
             </ons-list-item>
             <ons-list-item class="input-items">
-                <label class="center" id="pos2">
+                <label class="center" id="pos1">
                 </label>
                 <div class="right">
                     <ons-icon tappable onclick="editDrink(1)" icon="md-edit" class="list-item__icon"></ons-icon>
@@ -159,7 +116,7 @@
                 </div>
             </ons-list-item>
             <ons-list-item class="input-items">
-                <label class="center" id="pos3">
+                <label class="center" id="pos2">
                 </label>
                 <div class="right">
                     <ons-icon tappable onclick="editDrink(2)" icon="md-edit" class="list-item__icon"></ons-icon>
@@ -167,101 +124,12 @@
                 </div>
             </ons-list-item>
             <ons-list-item class="input-items">
-                <label class="center" id="pos4">
+                <label class="center" id="pos3">
                 </label>
                 <div class="right">
-                    <ons-icon tappable onclick="editDrink(2)" icon="md-edit" class="list-item__icon"></ons-icon>
-                    <ons-icon tappable onclick="removeDrink(2)" icon="md-delete" class="list-item__icon"></ons-icon>
+                    <ons-icon tappable onclick="editDrink(3)" icon="md-edit" class="list-item__icon"></ons-icon>
+                    <ons-icon tappable onclick="removeDrink(3)" icon="md-delete" class="list-item__icon"></ons-icon>
                 </div>
-            </ons-list-item>
-
-            <ons-list-header>Select</ons-list-header>
-            <ons-list-item>
-                <div class="center">
-                    <ons-select id="select-input" style="width: 120px">
-                        <option value="Vue">
-                            Vue
-                        </option>
-                        <option value="React">
-                            React
-                        </option>
-                        <option value="Angular">
-                            Angular
-                        </option>
-                    </ons-select>
-
-                </div>
-                <div class="right right-label">
-                    <span id="awesome-platform">Vue&nbsp;</span>is awesome!
-                </div>
-            </ons-list-item>
-
-            <ons-list-header>Radio buttons</ons-list-header>
-            <ons-list-item tappable>
-                <label class="left">
-                    <ons-radio class="radio-fruit" input-id="radio-0" value="Apples"></ons-radio>
-                </label>
-                <label for="radio-0" class="center">Apples</label>
-            </ons-list-item>
-            <ons-list-item tappable>
-                <label class="left">
-                    <ons-radio class="radio-fruit" input-id="radio-1" value="Bananas" checked></ons-radio>
-                </label>
-                <label for="radio-1" class="center">Bananas</label>
-            </ons-list-item>
-            <ons-list-item tappable modifier="longdivider">
-                <label class="left">
-                    <ons-radio class="radio-fruit" input-id="radio-2" value="Oranges"></ons-radio>
-                </label>
-                <label for="radio-2" class="center">Oranges</label>
-            </ons-list-item>
-            <ons-list-item>
-                <div id="fruit-love" class="center">
-                    I love Bananas!
-                </div>
-            </ons-list-item>
-
-            <ons-list-header>Checkboxes - <span id="checkboxes-header">Green,Blue</span></ons-list-header>
-            <ons-list-item tappable>
-                <label class="left">
-                    <ons-checkbox class="checkbox-color" input-id="checkbox-0" value="Red"></ons-checkbox>
-                </label>
-                <label class="center" for="checkbox-0">
-                    Red
-                </label>
-            </ons-list-item>
-            <ons-list-item tappable>
-                <label class="left">
-                    <ons-checkbox class="checkbox-color" input-id="checkbox-1" value="Green" checked></ons-checkbox>
-                </label>
-                <label class="center" for="checkbox-1">
-                    Green
-                </label>
-            </ons-list-item>
-            <ons-list-item tappable>
-                <label class="left">
-                    <ons-checkbox class="checkbox-color" input-id="checkbox-2" value="Blue" checked></ons-checkbox>
-                </label>
-                <label class="center" for="checkbox-2">
-                    Blue
-                </label>
-            </ons-list-item>
-
-            <ons-list-header>Range slider</ons-list-header>
-            <ons-list-item>
-                Adjust the volume:
-                <ons-row>
-                    <ons-col width="40px" style="text-align: center; line-height: 31px;">
-                        <ons-icon icon="md-volume-down"></ons-icon>
-                    </ons-col>
-                    <ons-col>
-                        <ons-range id="range-slider" value="25" style="width: 100%;"></ons-range>
-                    </ons-col>
-                    <ons-col width="40px" style="text-align: center; line-height: 31px;">
-                        <ons-icon icon="md-volume-up"></ons-icon>
-                    </ons-col>
-                </ons-row>
-                Volume:<span id="volume-value">&nbsp;25</span> <span id="careful-message" style="display: none">&nbsp;(careful, that's loud)</span>
             </ons-list-item>
         </ons-list>
 
@@ -344,6 +212,22 @@
                 color: #666;
             }
         </style>
+    </ons-page>
+</template>
+
+<template id="editCocktail.html">
+    <ons-page id="editCocktail-page">
+        <ons-toolbar>
+            <div class="left">
+                <ons-back-button>Cancel</ons-back-button>
+            </div>
+            <div class="right">
+                <ons-button onclick="saveCocktail()">Save</ons-button>
+            </div>
+            <div class="center" id="cocktailName"></div>
+        </ons-toolbar>
+        <div id="settingsContent" style="text-align: center;">
+        </div>
     </ons-page>
 </template>
 
