@@ -8,10 +8,13 @@
 const express = require("express")
 const serialport = require('serialport');
 const {SerialPort} = require("serialport");
+const bodyParser = require('body-parser')
+
 
 const serial = new SerialPort({ path: '/dev/ttyUSB0', baudRate: 9600 })
 
 const server = express();
+server.use(bodyParser.text())
 
 let fs = require("fs")
 let path = require("path");
@@ -39,10 +42,10 @@ function getIngredient(name) {
 }
 
 let drinks = [
-    {name: "Vodka", position:1},
-    {name: "Gin", position:2},
-    {name: "Tonic Water", position:3},
-    {name: "Energie", position:4},
+    {name: "Vodka", position:0},
+    {name: "Gin", position:1},
+    {name: "Tonic Water", position:2},
+    {name: "Energie", position:3},
 ]
 
 let ingredients = [
@@ -144,8 +147,29 @@ server.get("/", (req, res) => {
     res.sendFile(__dirname + "/html/index2.html");
 })
 
-server.get("/btn1", (req, res) => {
-    serial.write('Hallo');
+server.post("/saveDrinks", (req, res) => {
+    console.log(req.body)
+    for(let i = 0; i<299999; i++){
+        console.log()
+    }
+    console.log(req.body)
+    if(drinks_json === req.body){
+        console.log("success")
+    }
     res.status(200);
-    res.send();
+    res.send("received data");
 })
+server.post("/saveCocktails", (req, res) => {
+    console.log("received request")
+    for(let i = 0; i<299999; i++){
+        console.log()
+    }
+    console.log(req.body)
+    if(cocktails_json === req.body){
+        console.log("success")
+    }
+    res.status(200);
+    res.send("received data");
+})
+
+

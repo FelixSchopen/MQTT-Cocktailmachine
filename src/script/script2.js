@@ -1,5 +1,5 @@
-let cocktails_str = "[{\"name\":\"Vodka-Energie\",\"ingredients\":[{\"drink\":{\"name\":\"Vodka\",\"position\":1},\"amount\":40},{\"drink\":{\"name\":\"Energie\",\"position\":4},\"amount\":160}],\"ingredient_cout\":2},{\"name\":\"Gin-Tonic\",\"ingredients\":[{\"drink\":{\"name\":\"Gin\",\"position\":2},\"amount\":40},{\"drink\":{\"name\":\"Tonic Water\",\"position\":3},\"amount\":160}],\"ingredient_cout\":2},{\"name\":\"Vodka Lemon\",\"ingredients\":[{\"drink\":{\"name\":\"Vodka\",\"position\":1},\"amount\":40},{\"drink\":{\"name\":\"Tonic Water\",\"position\":3},\"amount\":160}],\"ingredient_cout\":2}]";
-let drinks_str = "[{\"name\":\"Vodka\",\"position\":1},{\"name\":\"Gin\",\"position\":2},{\"name\":\"Tonic Water\",\"position\":3},{\"name\":\"Energie\",\"position\":4}]";
+let cocktails_str = "[{\"name\":\"Vodka-Energie\",\"ingredients\":[{\"drink\":{\"name\":\"Vodka\",\"position\":0},\"amount\":40},{\"drink\":{\"name\":\"Energie\",\"position\":3},\"amount\":160}],\"ingredient_cout\":2},{\"name\":\"Gin-Tonic\",\"ingredients\":[{\"drink\":{\"name\":\"Gin\",\"position\":1},\"amount\":40},{\"drink\":{\"name\":\"Tonic Water\",\"position\":2},\"amount\":160}],\"ingredient_cout\":2},{\"name\":\"Vodka Lemon\",\"ingredients\":[{\"drink\":{\"name\":\"Vodka\",\"position\":0},\"amount\":40},{\"drink\":{\"name\":\"Tonic Water\",\"position\":2},\"amount\":160}],\"ingredient_cout\":2}]"
+let drinks_str = "[{\"name\":\"Vodka\",\"position\":0},{\"name\":\"Gin\",\"position\":1},{\"name\":\"Tonic Water\",\"position\":2},{\"name\":\"Energie\",\"position\":3}]";
 
 let cocktails = JSON.parse(cocktails_str);
 let drinks = JSON.parse(drinks_str);
@@ -88,7 +88,6 @@ let removeDrink = function(index) {
     ons.notification.confirm('Are you sure you want to remove this drink?')
         .then(function (response){
             if(response == true){
-                console.log(index);
                 drinks[index] = null;
                 fillSettings();
                 ons.notification.alert("Removed drink");
@@ -99,20 +98,6 @@ let removeDrink = function(index) {
         })
 }
 
-let editDrink = function(index) {
-    let drinks = JSON.parse("[{\"name\":\"Vodka\",\"position\":1},{\"name\":\"Gin\",\"position\":2},{\"name\":\"Tonic Water\",\"position\":3},{\"name\":\"Energie\",\"position\":4}]")
-    let modal = document.getElementById("editDrinkModal");
-    let cocktail = {}
-
-    let settings = document.getElementById("drinkSettings");
-    settings.innerHTML = "  <div class=\"left\">\n" +
-        "                       <ons-icon icon=\"md-wine\" class=\"list-item__icon\"></ons-icon>\n" +
-        "                   </div>\n" +
-        "                   <label class=\"center\">\n" +
-        "                       <ons-input id=\"name-input\" float maxlength=\"20\" placeholder=\"Name\"></ons-input>\n" +
-        "                   </label>"
-    modal.show()
-}
 let hideDrinkModal = function() {
     document.getElementById("editDrinkModal").hide();
 }
@@ -188,6 +173,13 @@ let fillSettings = function() {
             "                </ons-list-item>";
         idx++;
     });
+
+    html += "<ons-list-item onclick=\"setIndex(-1);fn.pushPage({'id': 'editCocktail.html', 'title': 'New Cocktail'}, 'default')\">\n" +
+        "                    <label class=\"center\">\n" +
+        "                           + add new cocktail " +
+        "                    </label>\n" +
+        "                </ons-list-item>";
+    idx++;
     cocktailsHTML.innerHTML = html;
 
 }
@@ -204,11 +196,17 @@ let setIndex = function(idx){
  * Generates a settings page for a specific cocktail
  */
 let fillCocktailEditPage = function() {
-    console.log(cocktails)
+    if(cocktailSettingsIndex === -1){
+        let newCocktail = {name: "New Cocktail", ingredients: []};
+        cocktails.push(newCocktail);
+        cocktailSettingsIndex = cocktails.length-1;
+        document.getElementById("deleteButton").innerHTML = "";
+    }
+
     const idx = cocktailSettingsIndex;
     const cocktail = cocktails[idx];
     let ingredients = cocktails[idx].ingredients;
-    document.getElementById("save").innerHTML = "<ons-button onclick=\"saveCocktail("+idx+")\">Save</ons-button>\n"
+    document.getElementById("save").innerHTML = "<ons-button modifier=\"large\" onclick=\"changeCocktailSettings("+idx+");saveCocktailsToMachine()\">Save</ons-button>\n";
     document.getElementById("cocktailName").innerText = cocktail.name;
     let html = "";
     let content = document.getElementById("settingsContent")
@@ -217,7 +215,7 @@ let fillCocktailEditPage = function() {
     html +=
             "<ons-list-item class=\"input-items\">\n" +
             "   <label class=\"center\">\n" +
-            "       <ons-input id=\"name\" float maxlength=\"20\" placeholder=\""+cocktail.name+"\"></ons-input>\n" +
+            "       <ons-input id=\"name\" modifier=\"underbar\" maxlength=\"auto\" value=\""+cocktail.name+"\"></ons-input>\n" +
             "   </label>\n" +
             "</ons-list-item>";
 
@@ -252,13 +250,25 @@ let generateIngredient = function(ingCount, ingredient) {
         "       <ons-select class=\"select\">\n" +
         "           <select id=\"ing"+ingCount+"\" class=\"select-input\">\n";
 
+    let idx = 0;
+    if(getDrinkByName(ingredient.drink.name) == null){
+        // Drink for this cocktail is missing
+        document.getElementById("settingsContent").setAttribute("style", "pointer-events: none;");
+        ons.notification.alert('One or more drinks for this cocktail are currently not available on the machine. You can only delete this cocktail or cancel.')
+        html += "<option selected>"+ingredient.drink.name+"</option>\"";
+    }
     drinks.forEach(function(drink){
-        if(drink.name === ingredient.drink.name){
-            html += "<option selected>"+drink.name+"</option>\"";
+        if(drink == null){
         }
         else {
-            html += "<option>"+drink.name+"</option>\"";
+            if(drink.name === ingredient.drink.name){
+                html += "<option selected>"+drink.name+"</option>\"";
+            }
+            else {
+                html += "<option>"+drink.name+"</option>\"";
+            }
         }
+        idx++;
     })
 
     html+=  "            </select>\n" +
@@ -277,32 +287,51 @@ let generateIngredient = function(ingCount, ingredient) {
  * @param idx index of the cocktail in the cocktails-array
  */
 let addIngredient = function(idx){
+    changeCocktailSettings(idx);
     let newIngredient = {drink: drinks[0], amount:0};
     cocktails[idx].ingredients.push(newIngredient);
     fillCocktailEditPage();
 }
 
 /**
- * Save the settings of a specific cocktail
+ * Change the settings of a specific cocktail
+ * @param idx index of the cocktail in the cocktails-array
  */
-let saveCocktail = function(idx){
+let changeCocktailSettings = function(idx){
     let elements = document.getElementById("cocktailSettings").getElementsByTagName("ons-list-item");
     let len = elements.length;
     let name = document.getElementById("name").value;
-    console.log("Cocktail name: " + name);
+
+    if(name === ""){
+        name = "New Cocktail"
+    }
+    cocktails[idx].name = name;
 
     let newIngredients = [];
     let drink;
     let amount;
 
-    for(let i = 0; i<len-1; i++){
+    for(let i = 0; i<len-2; i++){
         let el = document.getElementById("ing"+i);
         drink = el.value;
         el = document.getElementById("ingAmount"+i);
-        amount = el.value;
-        console.log("Drink: "+ drink + " Amount: "+ amount)
-        //newIngredients.push()
+        amount = Number(el.value);
+        newIngredients.push({drink: getDrinkByName(drink), amount: amount})
     }
+    cocktails[idx].ingredients = newIngredients;
+}
+
+let getDrinkByName = function(name) {
+    let return_drink = null;
+    drinks.forEach(function(drink){
+        if(drink == null){
+            // continue;
+        }
+        else if(name === drink.name){
+            return_drink = drink;
+        }
+    })
+    return return_drink;
 }
 
 /**
@@ -314,11 +343,108 @@ document.addEventListener('show', function(event) {
         fillCocktails()
     }
     if (event.target.matches('#settings-page')) {
-        //fillSettings()
+        fillSettings()
     }
     if (event.target.matches('#editCocktail-page')) {
-        cocktails = JSON.parse(JSON.stringify(cocktails_save))
         fillCocktailEditPage();
     }
 }, false);
 
+let discardCocktailChanges = function() {
+    cocktails = JSON.parse(JSON.stringify(cocktails_save))
+}
+
+let discardDrinkChanges = function() {
+
+}
+
+let deleteCocktail = function() {
+    ons.notification.confirm('Do you want to delete this cocktail?')
+        .then((response) => {
+            if(response){
+                cocktails.splice(cocktailSettingsIndex, 1);
+                saveCocktailsToMachine();
+            }
+        });
+}
+
+
+let saveDrinksToMachine = function() {
+    let newDrinksJSON = JSON.stringify(drinks);
+
+    let xhr = new XMLHttpRequest();
+    xhr.open("POST", "saveDrinks", true);
+    xhr.send(newDrinksJSON);
+
+    waitForResponse()
+
+    let response;
+    xhr.onreadystatechange = function () {
+        if (this.readyState === 4 && this.status === 200) {
+            response = xhr.response;
+            console.log(response);
+            stopWaitingforResponse();
+        }
+        else {
+            // unable to change settings
+        }
+    };
+
+}
+
+let saveCocktailsToMachine = function() {
+    let newCocktailsJSON = JSON.stringify(cocktails)
+
+    let xhr = new XMLHttpRequest();
+    xhr.open("POST", "saveCocktails", true);
+    xhr.send(newCocktailsJSON);
+
+    waitForResponse();
+
+    let response;
+    xhr.onreadystatechange = function () {
+        if (this.readyState === 4 && this.status === 200) {
+            response = xhr.response;
+            console.log(response);
+            stopWaitingforResponse();
+            document.getElementById("cancelButton").click();
+        }
+        else {
+            // unable to change settings
+        }
+    };
+
+    cocktails_save = JSON.parse(newCocktailsJSON)
+}
+
+let editDrink = function(pos) {
+    let name = "";
+    if (drinks[0] != null){
+        name = drinks[0].name;
+    }
+    ons.notification.prompt({
+        message: "Position " + (pos+1),
+        cancelable: true,
+        defaultValue: name,
+        title: "Enter name of the drink"
+
+    }).then(function (input){
+        if(input == null){
+            return;
+        }
+        let newDrink = {name: input, position: pos}
+        drinks[0] = newDrink;
+        document.getElementById("pos"+pos).setAttribute("style", "color: black;");
+        saveDrinksToMachine();
+        fillSettings();
+    })
+}
+
+
+let waitForResponse = function () {
+    document.getElementById("waitForServer").show();
+}
+
+let stopWaitingforResponse = function () {
+    document.getElementById("waitForServer").hide();
+}
