@@ -144,7 +144,7 @@ server.use("/script", express.static(__dirname + "/script"));
 
 server.get("/", (req, res) => {
     res.status(200);
-    res.sendFile(__dirname + "/html/index2.html");
+    res.sendFile(__dirname + "/html/index.html");
 })
 
 server.post("/saveDrinks", (req, res) => {
