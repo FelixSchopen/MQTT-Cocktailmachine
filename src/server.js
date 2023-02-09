@@ -25,10 +25,6 @@ const cocktailSettingsFile = path.join(fileDirectory, "cocktails.json");
 let drinks = [];
 let cocktails = [];
 
-
-let defaultCocktailSettingsString = "[{\"name\":\"Vodka-Energie\",\"ingredients\":[{\"drink\":{\"name\":\"Vodka\",\"position\":0},\"amount\":40},{\"drink\":{\"name\":\"Energie\",\"position\":3},\"amount\":160}],\"ingredient_cout\":2},{\"name\":\"Gin-Tonic\",\"ingredients\":[{\"drink\":{\"name\":\"Gin\",\"position\":1},\"amount\":40},{\"drink\":{\"name\":\"Tonic Water\",\"position\":2},\"amount\":160}],\"ingredient_cout\":2},{\"name\":\"Vodka Lemon\",\"ingredients\":[{\"drink\":{\"name\":\"Vodka\",\"position\":0},\"amount\":40},{\"drink\":{\"name\":\"Tonic Water\",\"position\":2},\"amount\":160}],\"ingredient_cout\":2}]"
-let defaultDrinkSettingsString = "[{\"name\":\"Vodka\",\"position\":0},{\"name\":\"Gin\",\"position\":1},{\"name\":\"Tonic Water\",\"position\":2},{\"name\":\"Energie\",\"position\":3}]";
-
 /**
  * Writes string to file
  * @param path path to file

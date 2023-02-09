@@ -128,6 +128,12 @@
             </ons-list-item>
         </ons-list>
 
+        <ons-bottom-toolbar style="height: auto">
+            <div class="center" id="reset">
+                <ons-button modifier="large" onclick="resetSettings()">Reset settings</ons-button>
+            </div>
+        </ons-bottom-toolbar>
+
         <script>
             ons.getScriptPage().onInit = function () {
                 if (ons.platform.isAndroid()) {

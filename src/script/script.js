@@ -4,6 +4,9 @@ let drinks = []
 let cocktails_save = []
 let drinks_save = []
 
+let defaultCocktailSettingsString = "[{\"name\":\"Vodka-Energie\",\"ingredients\":[{\"drink\":{\"name\":\"Vodka\",\"position\":0},\"amount\":40},{\"drink\":{\"name\":\"Energie\",\"position\":3},\"amount\":160}],\"ingredient_cout\":2},{\"name\":\"Gin-Tonic\",\"ingredients\":[{\"drink\":{\"name\":\"Gin\",\"position\":1},\"amount\":40},{\"drink\":{\"name\":\"Tonic Water\",\"position\":2},\"amount\":160}],\"ingredient_cout\":2},{\"name\":\"Vodka Lemon\",\"ingredients\":[{\"drink\":{\"name\":\"Vodka\",\"position\":0},\"amount\":40},{\"drink\":{\"name\":\"Tonic Water\",\"position\":2},\"amount\":160}],\"ingredient_cout\":2}]"
+let defaultDrinkSettingsString = "[{\"name\":\"Vodka\",\"position\":0},{\"name\":\"Gin\",\"position\":1},{\"name\":\"Tonic Water\",\"position\":2},{\"name\":\"Energie\",\"position\":3}]";
+
 let cocktailSettingsIndex = 0;
 
 window.fn = {};
@@ -394,14 +397,12 @@ let saveDrinksToMachine = function() {
     xhr.onreadystatechange = function () {
         if (this.readyState === 4 && this.status === 200) {
             response = xhr.response;
-            stopWaitingForResponse();
+            saveCocktailsToMachine();
         }
         else {
             //throw new Error('Server responded with status code ' + xhr.status + ": " + xhr.response);
         }
     };
-
-    saveCocktailsToMachine();
 }
 
 let saveCocktailsToMachine = function() {
@@ -449,6 +450,21 @@ let editDrink = function(pos) {
         saveDrinksToMachine();
         fillSettings();
     })
+}
+
+let resetSettings = function(){
+    ons.notification.confirm("Are you sure you want to reset all settings?")
+        .then((response) => {
+            if(response){
+                drinks_save = [null,null,null,null];
+                drinks = [null,null,null,null];
+                cocktails_save = [];
+                cocktails = [];
+
+                saveDrinksToMachine();
+                fillSettings();
+            }
+        });
 }
 
 let waitForResponse = function () {
