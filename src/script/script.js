@@ -49,10 +49,15 @@ let confirmCocktail = function(idx) {
             ons.notification.alert('Invalid cocktail size!')
         } else {
             // Try to mix Cocktail
-            blockingHttpRequest("mixCocktail", idx+":"+input)
-            ons.notification.toast('Mixing cocktail ...', {
-                timeout: 2000
-            })
+            let response = blockingHttpRequest("mixCocktail", idx+":"+input);
+            if(response === "okay"){
+                ons.notification.toast('Mixing cocktail ...', {
+                    timeout: 2000
+                })
+            }
+            else {
+                ons.notification.alert("Invalid cocktail settings")
+            }
         }
     })
 }
@@ -379,9 +384,6 @@ let saveDrinksToMachine = function() {
             }
         })
     });
-
-    console.log(cocktails[0]);
-
     let xhr = new XMLHttpRequest();
     xhr.open("POST", "saveDrinks", true);
     xhr.send(newDrinksJSON);
@@ -392,13 +394,14 @@ let saveDrinksToMachine = function() {
     xhr.onreadystatechange = function () {
         if (this.readyState === 4 && this.status === 200) {
             response = xhr.response;
-            console.log(response);
             stopWaitingForResponse();
         }
         else {
             //throw new Error('Server responded with status code ' + xhr.status + ": " + xhr.response);
         }
     };
+
+    saveCocktailsToMachine();
 }
 
 let saveCocktailsToMachine = function() {
@@ -414,7 +417,6 @@ let saveCocktailsToMachine = function() {
     xhr.onreadystatechange = function () {
         if (this.readyState === 4 && this.status === 200) {
             response = xhr.response;
-            console.log(response);
             stopWaitingForResponse();
             document.getElementById("cancelButton").click();
         }
