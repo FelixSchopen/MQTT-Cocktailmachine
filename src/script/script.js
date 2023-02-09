@@ -82,13 +82,32 @@ let fillCocktails = function(){
     let cocktailsHTML = document.getElementById("cocktails");
     let html = "";
     let idx = 0;
+    let available;
     cocktails.forEach(function(cocktail){
-        html += "<ons-list-item class=\"input-items\" onclick='confirmCocktail("+idx+")' style='height: 70px'>\n" +
-            "                    <label class=\"center\">\n" +
-            cocktail.name +
-            "                    </label>\n" +
-            "                </ons-list-item>";
+        available = true;
+        cocktail.ingredients.forEach(ingredient => {
+            if(getDrinkByName(ingredient.drink.name) == null){
+                available = false;
+            }
+        })
+
+        if(available){
+            html += "<ons-list-item class=\"input-items\" onclick='confirmCocktail("+idx+")' style='height: 70px'>\n" +
+                "                    <label class=\"center\">\n" +
+                cocktail.name +
+                "                    </label>\n" +
+                "                </ons-list-item>";
+        }
+        else {
+            html += "<ons-list-item class=\"input-items\" onclick='cocktailNotAvailable("+idx+")' style='height: 70px'>\n" +
+                "                    <label class=\"center\">\n" +
+                cocktail.name +
+                "                    </label>\n" +
+                "                </ons-list-item>";
+        }
+
         idx++;
+
     });
     cocktailsHTML.innerHTML = html;
 }
@@ -163,6 +182,10 @@ let fillSettings = function() {
  */
 let setIndex = function(idx){
     cocktailSettingsIndex = idx;
+}
+
+let cocktailNotAvailable = function (){
+    ons.notification.alert("Cocktail not available");
 }
 
 /**
@@ -347,6 +370,17 @@ let deleteCocktail = function() {
 
 let saveDrinksToMachine = function() {
     let newDrinksJSON = JSON.stringify(drinks);
+
+    cocktails.forEach(cocktail => {
+        cocktail.ingredients.forEach(ingredient => {
+            let ingredientDrink = getDrinkByName(ingredient.drink.name);
+            if(ingredientDrink != null){
+                ingredient.drink = ingredientDrink;
+            }
+        })
+    });
+
+    console.log(cocktails[0]);
 
     let xhr = new XMLHttpRequest();
     xhr.open("POST", "saveDrinks", true);
