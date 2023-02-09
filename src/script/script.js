@@ -1,11 +1,8 @@
-let cocktails_str = "[{\"name\":\"Vodka-Energie\",\"ingredients\":[{\"drink\":{\"name\":\"Vodka\",\"position\":0},\"amount\":40},{\"drink\":{\"name\":\"Energie\",\"position\":3},\"amount\":160}],\"ingredient_cout\":2},{\"name\":\"Gin-Tonic\",\"ingredients\":[{\"drink\":{\"name\":\"Gin\",\"position\":1},\"amount\":40},{\"drink\":{\"name\":\"Tonic Water\",\"position\":2},\"amount\":160}],\"ingredient_cout\":2},{\"name\":\"Vodka Lemon\",\"ingredients\":[{\"drink\":{\"name\":\"Vodka\",\"position\":0},\"amount\":40},{\"drink\":{\"name\":\"Tonic Water\",\"position\":2},\"amount\":160}],\"ingredient_cout\":2}]"
-let drinks_str = "[{\"name\":\"Vodka\",\"position\":0},{\"name\":\"Gin\",\"position\":1},{\"name\":\"Tonic Water\",\"position\":2},{\"name\":\"Energie\",\"position\":3}]";
+let cocktails = []
+let drinks = []
 
-let cocktails = JSON.parse(cocktails_str);
-let drinks = JSON.parse(drinks_str);
-
-let cocktails_save = JSON.parse(cocktails_str)
-let drinks_save = JSON.parse(drinks_str);
+let cocktails_save = []
+let drinks_save = []
 
 let cocktailSettingsIndex = 0;
 
@@ -32,14 +29,10 @@ window.fn.pushPage = function (page, anim) {
     }
 };
 
-let updateCocktails = function () {
-
-}
-
 /**
- * Alert that shows when user requests a drink
+ * Confirm cocktail to mix and ente5 size of the cocktail
  */
-let confirmCocktail = function() {
+let confirmCocktail = function(idx) {
     ons.notification.prompt({
         message: "Click anywhere to cancel",
         cancelable: true,
@@ -56,28 +49,12 @@ let confirmCocktail = function() {
             ons.notification.alert('Invalid cocktail size!')
         } else {
             // Try to mix Cocktail
+            blockingHttpRequest("mixCocktail", idx+":"+input)
             ons.notification.toast('Mixing cocktail ...', {
                 timeout: 2000
             })
         }
     })
-}
-
-/**
- * Remove cocktail from cocktail settings
- * @param index
- */
-let removeCocktail = function(index) {
-    ons.notification.confirm('Are you sure you want to remove this cocktail?')
-        .then(function (response){
-            if(response == true){
-                cocktails[index] = null;
-                ons.notification.alert("Removed cocktail");
-            }
-            if(response == false){
-                // Keep cocktail
-            }
-        })
 }
 
 /**
@@ -89,17 +66,13 @@ let removeDrink = function(index) {
         .then(function (response){
             if(response == true){
                 drinks[index] = null;
+                saveDrinksToMachine();
                 fillSettings();
-                ons.notification.alert("Removed drink");
             }
             if(response == false){
                 // Keep cocktail
             }
         })
-}
-
-let hideDrinkModal = function() {
-    document.getElementById("editDrinkModal").hide();
 }
 
 /**
@@ -288,7 +261,14 @@ let generateIngredient = function(ingCount, ingredient) {
  */
 let addIngredient = function(idx){
     changeCocktailSettings(idx);
-    let newIngredient = {drink: drinks[0], amount:0};
+    let newIngredient;
+
+    for(let i = 0; i<4; i++){
+        if(drinks[i] != null){
+            newIngredient = {drink: drinks[i], amount:0};
+            i = 4;
+        }
+    }
     cocktails[idx].ingredients.push(newIngredient);
     fillCocktailEditPage();
 }
@@ -354,10 +334,6 @@ let discardCocktailChanges = function() {
     cocktails = JSON.parse(JSON.stringify(cocktails_save))
 }
 
-let discardDrinkChanges = function() {
-
-}
-
 let deleteCocktail = function() {
     ons.notification.confirm('Do you want to delete this cocktail?')
         .then((response) => {
@@ -389,7 +365,6 @@ let saveDrinksToMachine = function() {
             //throw new Error('Server responded with status code ' + xhr.status + ": " + xhr.response);
         }
     };
-
 }
 
 let saveCocktailsToMachine = function() {
@@ -419,8 +394,8 @@ let saveCocktailsToMachine = function() {
 
 let editDrink = function(pos) {
     let name = "";
-    if (drinks[0] != null){
-        name = drinks[0].name;
+    if (drinks[pos] != null){
+        name = drinks[pos].name;
     }
     ons.notification.prompt({
         message: "Position " + (pos+1),
@@ -433,57 +408,11 @@ let editDrink = function(pos) {
             return;
         }
         let newDrink = {name: input, position: pos}
-        drinks[0] = newDrink;
+        drinks[pos] = newDrink;
         document.getElementById("pos"+pos).setAttribute("style", "color: black;");
         saveDrinksToMachine();
         fillSettings();
     })
-}
-
-/**
- * Check if settings of client are valid by comparing them to the ones on the server
- */
-let checkSettings = function (){
-
-    waitForResponse();
-
-    let drinksJSON = JSON.stringify(drinks_save)
-    let cocktailsJSON = JSON.stringify(cocktails_save)
-
-    let xhr1 = new XMLHttpRequest();
-    xhr1.open("POST", "checkDrinkSettings", true);
-    xhr1.send(drinksJSON);
-
-
-    let response;
-    xhr1.onreadystatechange = function () {
-        if (this.readyState === 4 && this.status === 200) {
-            response = xhr1.response;
-            if(response === "okay"){
-                // drink settings are valid
-            }
-        }
-        else {
-            //throw new Error('Server responded with status code ' + xhr.status + ": " + xhr.response);
-        }
-    };
-
-    let xhr2 = new XMLHttpRequest();
-    xhr2.open("POST", "checkCocktailSettings", true);
-    xhr2.send(drinksJSON);
-
-    xhr2.onreadystatechange = function () {
-        if (this.readyState === 4 && this.status === 200) {
-            response = xhr2.response;
-            if(response === "okay"){
-                // drink settings are valid
-                stopWaitingForResponse();
-            }
-        }
-        else {
-            //throw new Error('Server responded with status code ' + xhr.status + ": " + xhr.response);
-        }
-    };
 }
 
 let waitForResponse = function () {
@@ -493,3 +422,25 @@ let waitForResponse = function () {
 let stopWaitingForResponse = function () {
     document.getElementById("waitForServer").hide();
 }
+
+let blockingHttpRequest = function (url, data){
+    let xhr = new XMLHttpRequest();
+    xhr.open("POST", url, false);
+    xhr.send(data);
+    return xhr.response;
+}
+
+/**
+ * Get current drink and cocktail configurations from server
+ */
+let getCurrentSettings = function (){
+    let drinkSettings = blockingHttpRequest("getDrinkSettings", "");
+    let cocktailSettings = blockingHttpRequest("getCocktailSettings", "")
+
+    drinks_save = JSON.parse(drinkSettings);
+    drinks = JSON.parse(drinkSettings);
+    cocktails_save = JSON.parse(cocktailSettings);
+    cocktails = JSON.parse(cocktailSettings);
+}
+
+getCurrentSettings();

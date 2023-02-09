@@ -9,132 +9,87 @@ const express = require("express")
 const serialport = require('serialport');
 const {SerialPort} = require("serialport");
 const bodyParser = require('body-parser')
-
-
-const serial = new SerialPort({ path: '/dev/ttyUSB0', baudRate: 9600 })
-
-const server = express();
-server.use(bodyParser.text())
-
 let fs = require("fs")
 let path = require("path");
 
+const serial = new SerialPort({ path: '/dev/ttyUSB0', baudRate: 9600 })
+const server = express();
+server.use(bodyParser.text())
+
 let rootDirectory = __dirname;
 const fileDirectory = '../cocktail_settings';
+const drinkSettingsFile = path.join(fileDirectory, "drinks.json");
+const cocktailSettingsFile = path.join(fileDirectory, "cocktails.json");
 
-const drinkFile = path.join(fileDirectory, "drinks.json");
-const ingredientFile = path.join(fileDirectory, "ingredients.json");
-const cocktailFile = path.join(fileDirectory, "cocktails.json");
-
-if (!fs.existsSync(fileDirectory)) {
-    fs.mkdirSync(fileDirectory);
-}
-
-function getIngredient(name) {
-    let return_val = {};
-    ingredients.forEach( ingredient => {
-        if(ingredient.name === name){
-            return_val = ingredient;
-            return;
-        }
-    });
-    return return_val;
-}
-
-let drinks = [
-    {name: "Vodka", position:0},
-    {name: "Gin", position:1},
-    {name: "Tonic Water", position:2},
-    {name: "Energie", position:3},
-]
-
-let ingredients = [
-    {drink: drinks[0], amount:40},
-    {drink: drinks[1], amount:40},
-    {drink: drinks[2], amount:160},
-    {drink: drinks[3], amount:160},
-]
-
-let cocktails = [
-    {name:"Vodka-Energie", ingredients: [ingredients[0], ingredients[3]]},
-    {name:"Gin-Tonic", ingredients: [ingredients[1], ingredients[2]]},
-    {name:"Vodka Lemon", ingredients: [ingredients[0], ingredients[2]]},
-]
-
-cocktails.forEach(cocktail =>{
-    cocktail.ingredient_cout  = cocktail.ingredients.length;
-});
+// Arrays to hold drink and cocktail settings
+let drinks = [];
+let cocktails = [];
 
 
-fs.writeFileSync(path.join(fileDirectory, drinkFile), JSON.stringify(drinks), function (err){
-    if (err) throw err;
-    console.log('Drinks saved!');
-});
-
-fs.writeFileSync(path.join(fileDirectory, ingredientFile), JSON.stringify(ingredients), function (err){
-    if (err) throw err;
-    console.log('Ingredients saved!');
-});
-
-fs.writeFileSync(path.join(fileDirectory, cocktailFile), JSON.stringify(cocktails), function (err){
-    if (err) throw err;
-    console.log('Cocktails saved!');
-});
-
-
-
-let drinks_json = fs.readFileSync(drinkFile, "utf-8");
-let ingredients_json = fs.readFileSync(ingredientFile, "utf-8");
-let cocktails_json = fs.readFileSync(cocktailFile, "utf-8");
-
-let drinks_r = JSON.parse(drinks_json);
-let ingredients_r = JSON.parse(ingredients_json);
-let cocktails_r = JSON.parse(cocktails_json);
-
-
-console.log(drinks);
-console.log(ingredients);
-console.log(cocktails);
-
-console.log(drinks_r);
-console.log(ingredients_r);
-console.log(cocktails_r);
+let defaultCocktailSettingsString = "[{\"name\":\"Vodka-Energie\",\"ingredients\":[{\"drink\":{\"name\":\"Vodka\",\"position\":0},\"amount\":40},{\"drink\":{\"name\":\"Energie\",\"position\":3},\"amount\":160}],\"ingredient_cout\":2},{\"name\":\"Gin-Tonic\",\"ingredients\":[{\"drink\":{\"name\":\"Gin\",\"position\":1},\"amount\":40},{\"drink\":{\"name\":\"Tonic Water\",\"position\":2},\"amount\":160}],\"ingredient_cout\":2},{\"name\":\"Vodka Lemon\",\"ingredients\":[{\"drink\":{\"name\":\"Vodka\",\"position\":0},\"amount\":40},{\"drink\":{\"name\":\"Tonic Water\",\"position\":2},\"amount\":160}],\"ingredient_cout\":2}]"
+let defaultDrinkSettingsString = "[{\"name\":\"Vodka\",\"position\":0},{\"name\":\"Gin\",\"position\":1},{\"name\":\"Tonic Water\",\"position\":2},{\"name\":\"Energie\",\"position\":3}]";
 
 /**
- * Delay function, used between data transmission
- * to give MCU time to handle data
+ * Writes string to file
+ * @param path path to file
+ * @param data data as string
+ */
+let writeToFile = function(path, data) {
+    fs.writeFileSync(path, data, function (err){
+        if (err) throw err;
+    });
+}
+
+/**
+ * Delay function, used between UART data transmission to give machine time to handle data
  * @param milliseconds
  * @returns {Promise<unknown>}
  */
-function sleep(milliseconds) {
-    return new Promise(resolve => setTimeout(resolve, milliseconds));
+async function sleep(milliseconds) {
+    await new Promise(resolve => setTimeout(resolve, milliseconds));
+}
+
+
+/**
+ * Save drinks to .json-file on server and sends settings to machine
+ */
+async function setDrinkSettings() {
+    let drinkSettings = JSON.stringify(drinks);
+    writeToFile(path.join(fileDirectory, drinkSettingsFile), drinkSettings);
+
+    let drinksForMachine = JSON.parse(drinkSettings);
+    for(let i = 0; i<4; i++){
+        if(drinksForMachine[i] == null){
+            drinksForMachine[i] = {name: "", position: i};
+        }
+    }
+
+    drinkSettings = JSON.stringify(drinksForMachine);
+    serial.write("drinks");
+    await sleep(100);
+    serial.write(drinkSettings);
+    await sleep(500);
 }
 
 /**
- * Send cocktail configurations to MCU
- * @returns {Promise<void>}
+ * Save cocktails to .json-file on server and sends settings to machine
  */
-async function init(){
-    serial.write("drinks");
-    await sleep(100);
-    serial.write(drinks_json);
-    await sleep(500);
+async function setCocktailSettings() {
+    let cocktailSettings = JSON.stringify(cocktails);
+    writeToFile(path.join(fileDirectory, cocktailSettingsFile), cocktailSettings);
 
-    serial.write("ingredients");
-    await sleep(100);
-    serial.write(ingredients_json);
-    await sleep(500);
+    // Machine needs array length of the ingredients to initialize cocktails properly
+    let cocktailsForMachine = JSON.parse(cocktailSettings)
+    cocktailsForMachine.forEach(cocktail => {
+        cocktail.ingredient_cout  = cocktail.ingredients.length;
+    });
 
+    cocktailSettings = JSON.stringify(cocktailsForMachine);
     serial.write("cocktails");
     await sleep(100);
-    serial.write(cocktails_json);
+    serial.write(cocktailSettings);
+    await sleep(500);
 }
-
-init();
-
-
-server.listen(8080,"192.168.178.122");
-console.log(`Listening on http://192.168.178.122:8080`);
 
 /**
  * Initialize webserver for user frontend
@@ -147,29 +102,66 @@ server.get("/", (req, res) => {
     res.sendFile(__dirname + "/html/index.html");
 })
 
-server.post("/saveDrinks", (req, res) => {
-    console.log(req.body)
-    for(let i = 0; i<299999; i++){
-        console.log()
-    }
-    console.log(req.body)
-    if(drinks_json === req.body){
-        console.log("success")
-    }
+server.post("/saveDrinks", async (req, res) => {
+    drinks = JSON.parse(req.body)
+    await setDrinkSettings()
     res.status(200);
-    res.send("received data");
+    res.send("okay");
 })
-server.post("/saveCocktails", (req, res) => {
-    console.log("received request")
-    for(let i = 0; i<299999; i++){
-        console.log()
-    }
-    console.log(req.body)
-    if(cocktails_json === req.body){
-        console.log("success")
-    }
+server.post("/saveCocktails", async (req, res) => {
+    cocktails = JSON.parse(req.body)
+    await setCocktailSettings()
     res.status(200);
-    res.send("received data");
+    res.send("okay");
 })
+
+server.post("/getDrinkSettings", (req, res) => {
+    res.status(200);
+    res.send(JSON.stringify(drinks));
+})
+
+server.post("/getCocktailSettings", (req, res) => {
+    res.status(200);
+    res.send(JSON.stringify(cocktails));
+})
+
+server.post("/mixCocktail", async (req, res) => {
+    serial.write("mix");
+    await sleep(100);
+    serial.write(req.body);
+    await sleep(100);
+
+    res.status(200);
+    res.send("okay");
+})
+
+if (!fs.existsSync(fileDirectory)) {
+    fs.mkdirSync(fileDirectory);
+}
+if(!fs.existsSync(drinkSettingsFile)){
+    //drinks = JSON.parse("[{\"name\":\"\",\"position\":0},{\"name\":\"\",\"position\":1},{\"name\":\"\",\"position\":2},{\"name\":\"\",\"position\":3}]");
+    drinks = [null, null, null, null];
+} else {
+    drinks = JSON.parse(fs.readFileSync(drinkSettingsFile, "utf-8"));
+}
+
+if(!fs.existsSync(cocktailSettingsFile)){
+    cocktails = [];
+} else {
+    cocktails = JSON.parse(fs.readFileSync(cocktailSettingsFile, "utf-8"));
+}
+
+async function setSettings(){
+    await setDrinkSettings();
+    await setCocktailSettings();
+}
+
+setSettings();
+
+server.listen(8080,"192.168.178.122");
+console.log(`Listening on http://192.168.178.122:8080`);
+
+
+
 
 
