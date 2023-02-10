@@ -165,10 +165,16 @@ async function setSettings(){
 
 setSettings();
 
-server.listen(8080,"192.168.178.122");
-console.log(`Listening on http://192.168.178.122:8080`);
 
-
+let home = false;
+if(home){
+    server.listen(8080,"192.168.178.122");
+    console.log(`Listening on http://192.168.178.122:8080`);
+}
+else {
+    server.listen(8080,"192.168.2.129");
+    console.log(`Listening on http://192.168.2.129:8080`);
+}
 
 
 
