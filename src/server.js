@@ -122,22 +122,11 @@ server.post("/getCocktailSettings", (req, res) => {
 })
 
 server.post("/mixCocktail", async (req, res) => {
-    let cocktail = cocktails[Number(req.body.split(":")[0])];
-    let totalAmount = 0;
-    cocktail.ingredients.forEach(ingredient => {
-        totalAmount += ingredient.amount;
-    })
-    if(totalAmount > 100){
-        res.status(200);
-        res.send("invalidAmount")
-        return;
-    }
-    else {
-        serial.write("mix");
-        await sleep(100);
-        serial.write(req.body);
-        await sleep(100);
-    }
+    serial.write("mix");
+    await sleep(100);
+    serial.write(req.body);
+    await sleep(100);
+
     res.status(200);
     res.send("okay");
 })
