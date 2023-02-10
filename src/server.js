@@ -45,7 +45,6 @@ async function sleep(milliseconds) {
     await new Promise(resolve => setTimeout(resolve, milliseconds));
 }
 
-
 /**
  * Save drinks to .json-file on server and sends settings to machine
  */
@@ -62,7 +61,7 @@ async function setDrinkSettings() {
 
     drinkSettings = JSON.stringify(drinksForMachine);
     serial.write("drinks");
-    await sleep(100);
+    await sleep(200);
     serial.write(drinkSettings);
     await sleep(500);
 }
@@ -82,9 +81,9 @@ async function setCocktailSettings() {
 
     cocktailSettings = JSON.stringify(cocktailsForMachine);
     serial.write("cocktails");
-    await sleep(100);
+    await sleep(200);
     serial.write(cocktailSettings);
-    await sleep(500);
+    await sleep(1000);
 }
 
 /**
@@ -135,7 +134,6 @@ if (!fs.existsSync(fileDirectory)) {
     fs.mkdirSync(fileDirectory);
 }
 if(!fs.existsSync(drinkSettingsFile)){
-    //drinks = JSON.parse("[{\"name\":\"\",\"position\":0},{\"name\":\"\",\"position\":1},{\"name\":\"\",\"position\":2},{\"name\":\"\",\"position\":3}]");
     drinks = [null, null, null, null];
 } else {
     drinks = JSON.parse(fs.readFileSync(drinkSettingsFile, "utf-8"));
