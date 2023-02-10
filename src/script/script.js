@@ -36,6 +36,17 @@ window.fn.pushPage = function (page, anim) {
  * Confirm cocktail to mix and ente5 size of the cocktail
  */
 let confirmCocktail = function(idx) {
+
+    let cocktail = cocktails[idx];
+    let totalAmount = 0;
+    cocktail.ingredients.forEach(ingredient => {
+        totalAmount += ingredient.amount;
+    })
+    if(totalAmount > 100){
+        ons.notification.alert("Invalid cocktail settings. Ingredients exceed 100%")
+        return;
+    }
+
     ons.notification.prompt({
         message: "Click anywhere to cancel",
         cancelable: true,
@@ -59,7 +70,7 @@ let confirmCocktail = function(idx) {
                 })
             }
             else {
-                ons.notification.alert("Invalid cocktail settings")
+                // server error response
             }
         }
     })
@@ -126,40 +137,14 @@ let fillCocktails = function(){
  */
 let fillSettings = function() {
 
-    if(drinks[0] == null){
-        document.getElementById("pos0").innerText = "Position 1: position not configured"
-        document.getElementById("pos0").setAttribute("style", "color: gray;");
-
-    }
-    else{
-        document.getElementById("pos0").innerText = "Position 1: "+drinks[0].name
-    }
-
-    if(drinks[1] == null){
-        document.getElementById("pos1").innerText = "Position 2: position not configured"
-        document.getElementById("pos1").setAttribute("style", "color: gray;");
-
-    }
-    else {
-        document.getElementById("pos1").innerText = "Position 2: "+drinks[1].name
-    }
-
-    if(drinks[2] == null){
-        document.getElementById("pos2").innerText = "Position 3: position not configured"
-        document.getElementById("pos2").setAttribute("style", "color: gray;");
-
-    }
-    else {
-        document.getElementById("pos2").innerText = "Position 3: "+drinks[2].name
-    }
-
-    if(drinks[3] == null){
-        document.getElementById("pos3").innerText = "Position 4: position not configured"
-        document.getElementById("pos3").setAttribute("style", "color: gray;");
-
-    }
-    else {
-        document.getElementById("pos3").innerText = "Position 4: "+drinks[3].name
+    for(let i = 0; i<4; i++){
+        if(drinks[i] == null){
+            document.getElementById("pos"+i).innerText = "Position "+ (i+1) +": position not configured"
+            document.getElementById("pos"+i).setAttribute("style", "color: gray;");
+        }
+        else{
+            document.getElementById("pos"+i).innerText = "Position " + (i+1) + ": "+drinks[i].name
+        }
     }
 
     let cocktailsHTML = document.getElementById("manageCocktails");
@@ -196,11 +181,21 @@ let cocktailNotAvailable = function (){
     ons.notification.alert("Cocktail not available");
 }
 
+let isAnyDrinkAvailable = function(){
+    for(let i = 0; i<4; i++){
+        if(drinks[i] != null){
+            return true;
+        }
+    }
+    return false;
+}
+
 /**
  * Generates a settings page for a specific cocktail
  */
 let fillCocktailEditPage = function() {
     if(cocktailSettingsIndex === -1){
+        // Add new Cocktail
         let newCocktail = {name: "New Cocktail", ingredients: []};
         cocktails.push(newCocktail);
         cocktailSettingsIndex = cocktails.length-1;
@@ -215,15 +210,15 @@ let fillCocktailEditPage = function() {
     let html = "";
     let content = document.getElementById("settingsContent")
     html += "<ons-list id='cocktailSettings'>" +
-            "<ons-list-header>NAME</ons-list-header>\n";
+            "   <ons-list-header>NAME</ons-list-header>\n";
     html +=
-            "<ons-list-item class=\"input-items\">\n" +
-            "   <label class=\"center\">\n" +
-            "       <ons-input id=\"name\" modifier=\"underbar\" maxlength=\"auto\" value=\""+cocktail.name+"\"></ons-input>\n" +
-            "   </label>\n" +
-            "</ons-list-item>";
+            "   <ons-list-item class=\"input-items\">\n" +
+            "       <label class=\"center\">\n" +
+            "           <ons-input id=\"name\" modifier=\"underbar\" maxlength=\"auto\" value=\""+cocktail.name+"\"></ons-input>\n" +
+            "       </label>\n" +
+            "   </ons-list-item>";
 
-    html += "<ons-list-header>INGREDIENTS</ons-list-header>\n";
+    html += "   <ons-list-header>INGREDIENTS</ons-list-header>\n";
 
     let ingredientCount = 0;
     ingredients.forEach(function(ingredient){
@@ -231,18 +226,18 @@ let fillCocktailEditPage = function() {
         ingredientCount++;
     });
 
-    html+=  "<ons-list-item onclick='addIngredient("+idx+")' class=\"input-items\">\n" +
-            "<div class=\"left\"> " +
-                "<ons-icon icon=\"md-plus\" class=\"list-item__icon\"></ons-icon> " +
-            "</div>" +
-            "</ons-list-item>"
+    html+=  "   <ons-list-item onclick='addIngredient("+idx+")' class=\"input-items\">\n" +
+            "       <div class=\"left\"> " +
+            "           <ons-icon icon=\"md-plus\" class=\"list-item__icon\"></ons-icon> " +
+            "       </div>" +
+            "   </ons-list-item>"
 
-        html += "</ons-list>";
+    html += "</ons-list>";
     content.innerHTML = html;
 }
 
 /**
- * Function to generate one ingredient
+ * Function to generate one ingredient entry with 2 drop down select menus
  * @param ingCount position of the ingredient in the ingredient-array of the cocktail
  * @param ingredient ingredient object {drink, amount}
  * @returns {string} html-string for this ingredient
@@ -250,21 +245,20 @@ let fillCocktailEditPage = function() {
 let generateIngredient = function(ingCount, ingredient) {
     let html = "";
     html+=  "<ons-list-item class=\"input-items\">\n" +
-        "   <label class=\"center\">\n" +
-        "       <ons-select class=\"select\">\n" +
-        "           <select id=\"ing"+ingCount+"\" class=\"select-input\">\n";
+            "   <label class=\"center\">\n" +
+            "       <ons-select class=\"select\">\n" +
+            "           <select id=\"ing"+ingCount+"\" class=\"select-input\">\n";
 
     let idx = 0;
     if(getDrinkByName(ingredient.drink.name) == null){
-        // Drink for this cocktail is missing
+        // Drink for this cocktail is currently not available -> user can not change the settings. Used to simplify settings.
         document.getElementById("settingsContent").setAttribute("style", "pointer-events: none;");
+        document.getElementById("save").innerHTML = "";
         ons.notification.alert('One or more drinks for this cocktail are currently not available on the machine. You can only delete this cocktail or cancel.')
         html += "<option selected>"+ingredient.drink.name+"</option>\"";
     }
     drinks.forEach(function(drink){
-        if(drink == null){
-        }
-        else {
+        if(drink != null){
             if(drink.name === ingredient.drink.name){
                 html += "<option selected>"+drink.name+"</option>\"";
             }
@@ -275,14 +269,15 @@ let generateIngredient = function(ingCount, ingredient) {
         idx++;
     })
 
-    html+=  "            </select>\n" +
-        "       </ons-select>" +
-        "   </label>\n" +
-        "<div class=\"right\">\n" +
-        "<text>amount in % &nbsp;</text>" +
-        "       <ons-input type='number' id=\"ingAmount"+ingCount+"\" modifier=\"underbar\" value=\""+ingredient.amount+"\"min=\"0\"max=\"100\"></ons-input>" +
-        "</div>" +
-        "</ons-list-item>";
+    html+=  "           </select>\n" +
+            "       </ons-select>" +
+            "   </label>\n" +
+            "   <div class=\"right\">\n" +
+            "       <text>amount in % &nbsp;</text>" +
+            "       <ons-input type='number' id=\"ingAmount"+ingCount+"\" modifier=\"underbar\" value=\""+ingredient.amount+"\"min=\"0\"max=\"100\"></ons-input>" +
+            "   </div>" +
+            "</ons-list-item>";
+
     return html;
 }
 
@@ -291,6 +286,10 @@ let generateIngredient = function(ingCount, ingredient) {
  * @param idx index of the cocktail in the cocktails-array
  */
 let addIngredient = function(idx){
+    if(!isAnyDrinkAvailable()){
+        ons.notification.alert("No drinks configured");
+        return;
+    }
     changeCocktailSettings(idx);
     let newIngredient;
 
@@ -387,17 +386,24 @@ let saveDrinksToMachine = function() {
             }
         })
     });
+
+    waitForResponse()
+
     let xhr = new XMLHttpRequest();
     xhr.open("POST", "saveDrinks", true);
     xhr.send(newDrinksJSON);
-
-    waitForResponse()
 
     let response;
     xhr.onreadystatechange = function () {
         if (this.readyState === 4 && this.status === 200) {
             response = xhr.response;
-            saveCocktailsToMachine();
+            if(response === "okay"){
+                drinks_save = JSON.parse(newDrinksJSON);
+                saveCocktailsToMachine();
+            }
+            else {
+                // server unable to save settings to machine
+            }
         }
         else {
             //throw new Error('Server responded with status code ' + xhr.status + ": " + xhr.response);
@@ -418,15 +424,22 @@ let saveCocktailsToMachine = function() {
     xhr.onreadystatechange = function () {
         if (this.readyState === 4 && this.status === 200) {
             response = xhr.response;
-            stopWaitingForResponse();
-            document.getElementById("cancelButton").click();
+            if(response === "okay"){
+                cocktails_save = JSON.parse(newCocktailsJSON)
+                stopWaitingForResponse();
+                let cancelButton = document.getElementById("cancelButton");
+                if(cancelButton != null){
+                    cancelButton.click()
+                }
+            }
+            else {
+                // server unable to save settings to machine
+            }
         }
         else {
             //throw new Error('Server responded with status code ' + xhr.status + ": " + xhr.response);
         }
     };
-
-    cocktails_save = JSON.parse(newCocktailsJSON)
 }
 
 let editDrink = function(pos) {
