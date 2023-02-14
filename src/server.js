@@ -62,7 +62,7 @@ async function setDrinkSettings() {
 
     drinkSettings = JSON.stringify(drinksForMachine);
     serial.write("drinks");
-    await sleep(100);
+    await sleep(200);
     serial.write(drinkSettings);
     await sleep(500);
 }
@@ -82,9 +82,9 @@ async function setCocktailSettings() {
 
     cocktailSettings = JSON.stringify(cocktailsForMachine);
     serial.write("cocktails");
-    await sleep(100);
+    await sleep(200);
     serial.write(cocktailSettings);
-    await sleep(500);
+    await sleep(1000);
 }
 
 /**
@@ -123,9 +123,9 @@ server.post("/getCocktailSettings", (req, res) => {
 
 server.post("/mixCocktail", async (req, res) => {
     serial.write("mix");
-    await sleep(100);
+    await sleep(200);
     serial.write(req.body);
-    await sleep(100);
+    await sleep(300);
 
     res.status(200);
     res.send("okay");
@@ -155,7 +155,7 @@ async function setSettings(){
 setSettings();
 
 
-let home = false;
+let home = true;
 if(home){
     server.listen(8080,"192.168.178.122");
     console.log(`Listening on http://192.168.178.122:8080`);
