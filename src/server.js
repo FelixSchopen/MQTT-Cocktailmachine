@@ -6,11 +6,13 @@
  */
 
 const express = require("express")
-const serialport = require('serialport');
 const {SerialPort} = require("serialport");
+const { ReadlineParser } = require('@serialport/parser-readline')
+
 const bodyParser = require('body-parser')
 let fs = require("fs")
 let path = require("path");
+const {set} = require("express/lib/application");
 
 const serial = new SerialPort({ path: '/dev/ttyUSB0', baudRate: 9600 })
 const server = express();
@@ -24,6 +26,8 @@ const cocktailSettingsFile = path.join(fileDirectory, "cocktails.json");
 // Arrays to hold drink and cocktail settings
 let drinks = [];
 let cocktails = [];
+
+let blocked = false;
 
 /**
  * Writes string to file
@@ -122,9 +126,9 @@ server.post("/getCocktailSettings", (req, res) => {
 
 server.post("/mixCocktail", async (req, res) => {
     serial.write("mix");
-    await sleep(100);
+    await sleep(200);
     serial.write(req.body);
-    await sleep(100);
+    await sleep(200);
 
     res.status(200);
     res.send("okay");
@@ -150,18 +154,38 @@ async function setSettings(){
     await setCocktailSettings();
 }
 
-setSettings();
-
-
 let home = false;
 if(home){
     server.listen(8080,"192.168.178.122");
     console.log(`Listening on http://192.168.178.122:8080`);
 }
 else {
-    server.listen(8080,"192.168.2.129");
-    console.log(`Listening on http://192.168.2.129:8080`);
+    server.listen(8080,"192.168.2.198");
+    console.log(`Listening on http://192.168.2.198:8080`);
 }
+
+let uart_input = async function(data) {
+    if(data === "init"){
+        await setSettings();
+        console.log("success");
+    }
+    else if(data === "block"){
+        blocked = true;
+    }
+    else if(data === "unblock"){
+        blocked = false;
+    }
+}
+
+const parser = serial.pipe(new ReadlineParser({}))
+parser.on('data', function(data) {
+    data = data.replace(/\W/g, '')
+    console.log(data);
+    uart_input(data)
+})
+
+
+setSettings();
 
 
 
