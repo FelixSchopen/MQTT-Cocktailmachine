@@ -155,14 +155,20 @@ async function setSettings(){
 }
 
 let home = false;
+let ip;
+let port = 8080;
+
 if(home){
-    server.listen(8080,"192.168.178.122");
-    console.log(`Listening on http://192.168.178.122:8080`);
+    ip = "192.168.178.122"
+    server.listen(port, ip);
 }
 else {
-    server.listen(8080,"192.168.2.198");
-    console.log(`Listening on http://192.168.2.198:8080`);
+    ip = "192.168.2.126"
+    server.listen(port, ip);
 }
+
+
+console.log('Listening on http://' + ip + ':' + port);
 
 let uart_input = async function(data) {
     if(data === "init"){
