@@ -226,11 +226,14 @@ let fillCocktailEditPage = function() {
         ingredientCount++;
     });
 
-    html+=  "   <ons-list-item onclick='addIngredient("+idx+")' class=\"input-items\">\n" +
+
+    if(cocktail.ingredients.length < 4){
+        html+=  "   <ons-list-item onclick='addIngredient("+idx+")' class=\"input-items\">\n" +
             "       <div class=\"left\"> " +
             "           <ons-icon icon=\"md-plus\" class=\"list-item__icon\"></ons-icon> " +
             "       </div>" +
             "   </ons-list-item>"
+    }
 
     html += "</ons-list>";
     content.innerHTML = html;
@@ -304,14 +307,11 @@ let addIngredient = function(idx){
 }
 
 /**
- * Change the settings of a specific cocktail
+ * Change the settings of a specific cocktail by collecting data from the elements of the settings-page
  * @param idx index of the cocktail in the cocktails-array
  */
 let changeCocktailSettings = function(idx){
-    let elements = document.getElementById("cocktailSettings").getElementsByTagName("ons-list-item");
-    let len = elements.length;
     let name = document.getElementById("name").value;
-
     if(name === ""){
         name = "New Cocktail"
     }
@@ -321,13 +321,19 @@ let changeCocktailSettings = function(idx){
     let drink;
     let amount;
 
-    for(let i = 0; i<len-2; i++){
-        let el = document.getElementById("ing"+i);
-        drink = el.value;
-        el = document.getElementById("ingAmount"+i);
-        amount = Number(el.value);
-        newIngredients.push({drink: getDrinkByName(drink), amount: amount})
+    let i = 0;
+    let htmlElement = document.getElementById("ing"+i);
+
+    while(htmlElement != null) {
+        drink = htmlElement.value;
+        htmlElement = document.getElementById("ingAmount"+i);
+        amount = Number(htmlElement.value);
+        newIngredients.push({drink: getDrinkByName(drink), amount: amount});
+
+        i++;
+        htmlElement = document.getElementById("ing"+i);
     }
+
     cocktails[idx].ingredients = newIngredients;
 }
 
