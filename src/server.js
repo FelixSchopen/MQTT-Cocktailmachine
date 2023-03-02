@@ -6,11 +6,13 @@
  */
 
 const express = require("express")
-const serialport = require('serialport');
 const {SerialPort} = require("serialport");
+const { ReadlineParser } = require('@serialport/parser-readline')
+
 const bodyParser = require('body-parser')
 let fs = require("fs")
 let path = require("path");
+const {set} = require("express/lib/application");
 
 const serial = new SerialPort({ path: '/dev/ttyUSB0', baudRate: 9600 })
 const server = express();
@@ -24,6 +26,8 @@ const cocktailSettingsFile = path.join(fileDirectory, "cocktails.json");
 // Arrays to hold drink and cocktail settings
 let drinks = [];
 let cocktails = [];
+
+let blocked = false;
 
 /**
  * Writes string to file
@@ -44,7 +48,6 @@ let writeToFile = function(path, data) {
 async function sleep(milliseconds) {
     await new Promise(resolve => setTimeout(resolve, milliseconds));
 }
-
 
 /**
  * Save drinks to .json-file on server and sends settings to machine
@@ -125,7 +128,7 @@ server.post("/mixCocktail", async (req, res) => {
     serial.write("mix");
     await sleep(200);
     serial.write(req.body);
-    await sleep(300);
+    await sleep(200);
 
     res.status(200);
     res.send("okay");
@@ -135,7 +138,6 @@ if (!fs.existsSync(fileDirectory)) {
     fs.mkdirSync(fileDirectory);
 }
 if(!fs.existsSync(drinkSettingsFile)){
-    //drinks = JSON.parse("[{\"name\":\"\",\"position\":0},{\"name\":\"\",\"position\":1},{\"name\":\"\",\"position\":2},{\"name\":\"\",\"position\":3}]");
     drinks = [null, null, null, null];
 } else {
     drinks = JSON.parse(fs.readFileSync(drinkSettingsFile, "utf-8"));
@@ -152,18 +154,44 @@ async function setSettings(){
     await setCocktailSettings();
 }
 
-setSettings();
+let home = false;
+let ip;
+let port = 8080;
 
-
-let home = true;
 if(home){
-    server.listen(8080,"192.168.178.122");
-    console.log(`Listening on http://192.168.178.122:8080`);
+    ip = "192.168.178.122"
+    server.listen(port, ip);
 }
 else {
-    server.listen(8080,"192.168.2.129");
-    console.log(`Listening on http://192.168.2.129:8080`);
+    ip = "192.168.2.126"
+    server.listen(port, ip);
 }
+
+
+console.log('Listening on http://' + ip + ':' + port);
+
+let uart_input = async function(data) {
+    if(data === "init"){
+        await setSettings();
+        console.log("success");
+    }
+    else if(data === "block"){
+        blocked = true;
+    }
+    else if(data === "unblock"){
+        blocked = false;
+    }
+}
+
+const parser = serial.pipe(new ReadlineParser({}))
+parser.on('data', function(data) {
+    data = data.replace(/\W/g, '')
+    console.log(data);
+    uart_input(data)
+})
+
+
+setSettings();
 
 
 

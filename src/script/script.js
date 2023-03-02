@@ -59,7 +59,7 @@ let confirmCocktail = function(idx) {
         if(input == null){
             return;
         }
-        if (isNaN(input) || input === "" || input < 100 || input > 500) {
+        if (isNaN(input) || input === "" || input < 0 || input > 500) {
             ons.notification.alert('Invalid cocktail size!')
         } else {
             // Try to mix Cocktail
