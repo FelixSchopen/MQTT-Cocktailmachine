@@ -69,6 +69,9 @@ let confirmCocktail = function(idx) {
                     timeout: 2000
                 })
             }
+            else if(response === "blocked"){
+                blockedAlert();
+            }
             else {
                 // server error response
             }
@@ -407,6 +410,9 @@ let saveDrinksToMachine = function() {
                 drinks_save = JSON.parse(newDrinksJSON);
                 saveCocktailsToMachine();
             }
+            else if(response === "blocked"){
+                blockedAlert();
+            }
             else {
                 // server unable to save settings to machine
             }
@@ -438,6 +444,10 @@ let saveCocktailsToMachine = function() {
                     cancelButton.click()
                 }
             }
+            else if(response === "blocked"){
+                stopWaitingForResponse();
+                blockedAlert();
+            }
             else {
                 // server unable to save settings to machine
             }
@@ -446,6 +456,10 @@ let saveCocktailsToMachine = function() {
             //throw new Error('Server responded with status code ' + xhr.status + ": " + xhr.response);
         }
     };
+}
+
+let blockedAlert = function() {
+    ons.notification.alert("Cocktailmachine not ready");
 }
 
 let editDrink = function(pos) {
@@ -513,5 +527,22 @@ let getCurrentSettings = function (){
     cocktails_save = JSON.parse(cocktailSettings);
     cocktails = JSON.parse(cocktailSettings);
 }
+
+let command = function(cmd){
+    let xhr = new XMLHttpRequest();
+    xhr.open("POST", "cmd", true);
+    xhr.send(cmd);
+    let response;
+    xhr.onreadystatechange = function () {
+        if (this.readyState === 4 && this.status === 200) {
+            response = xhr.response;
+            if (response === "okay") {
+                ons.notification.alert("Deadlock will get triggered on next Cocktail");
+            }
+        } else {
+            // Server error
+        }
+    }
+};
 
 getCurrentSettings();

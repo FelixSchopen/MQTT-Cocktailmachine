@@ -15,6 +15,7 @@ let path = require("path");
 const {set} = require("express/lib/application");
 
 const serial = new SerialPort({ path: '/dev/ttyUSB0', baudRate: 9600 })
+
 const server = express();
 server.use(bodyParser.text())
 
@@ -26,8 +27,6 @@ const cocktailSettingsFile = path.join(fileDirectory, "cocktails.json");
 // Arrays to hold drink and cocktail settings
 let drinks = [];
 let cocktails = [];
-
-let blocked = false;
 
 /**
  * Writes string to file
@@ -102,12 +101,24 @@ server.get("/", (req, res) => {
 })
 
 server.post("/saveDrinks", async (req, res) => {
+    if(blocked){
+        res.status(200);
+        res.send("blocked");
+        return;
+    }
+    blocked = true;
     drinks = JSON.parse(req.body)
     await setDrinkSettings()
     res.status(200);
     res.send("okay");
 })
 server.post("/saveCocktails", async (req, res) => {
+    if(blocked){
+        res.status(200);
+        res.send("blocked");
+        return;
+    }
+    blocked = true;
     cocktails = JSON.parse(req.body)
     await setCocktailSettings()
     res.status(200);
@@ -119,17 +130,31 @@ server.post("/getDrinkSettings", (req, res) => {
     res.send(JSON.stringify(drinks));
 })
 
+server.post("/cmd", async (req, res) => {
+    serial.write("cmd");
+    await sleep(200);
+    serial.write(req.body);
+    await sleep(200);
+    res.status(200);
+    res.send("okay");
+})
+
 server.post("/getCocktailSettings", (req, res) => {
     res.status(200);
     res.send(JSON.stringify(cocktails));
 })
 
 server.post("/mixCocktail", async (req, res) => {
+    if(blocked){
+        res.status(200);
+        res.send("blocked");
+        return;
+    }
+    blocked = true;
     serial.write("mix");
     await sleep(200);
     serial.write(req.body);
     await sleep(200);
-
     res.status(200);
     res.send("okay");
 })
@@ -154,7 +179,7 @@ async function setSettings(){
     await setCocktailSettings();
 }
 
-let home = false;
+let home = true;
 let ip;
 let port = 8080;
 
@@ -167,18 +192,23 @@ else {
     server.listen(port, ip);
 }
 
-
 console.log('Listening on http://' + ip + ':' + port);
 
+
+let blocked = true;
+let systemstart = false;
+
 let uart_input = async function(data) {
-    if(data === "init"){
+    // Will only execute once at machine start
+    if(data === "init" && !systemstart){
+        systemstart = true;
         await setSettings();
-        console.log("success");
     }
-    else if(data === "block"){
-        blocked = true;
+    else if(data === "initialized"){
+        blocked = false;
+        systemstart = false;
     }
-    else if(data === "unblock"){
+    else if(data === "unblock" && !systemstart){
         blocked = false;
     }
 }
@@ -189,7 +219,6 @@ parser.on('data', function(data) {
     console.log(data);
     uart_input(data)
 })
-
 
 setSettings();
 
