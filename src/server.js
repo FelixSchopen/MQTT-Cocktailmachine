@@ -15,7 +15,6 @@ let path = require("path");
 const {set} = require("express/lib/application");
 
 const serial = new SerialPort({ path: '/dev/ttyUSB0', baudRate: 9600 })
-
 const server = express();
 server.use(bodyParser.text())
 
@@ -66,7 +65,7 @@ async function setDrinkSettings() {
     serial.write("drinks");
     await sleep(200);
     serial.write(drinkSettings);
-    await sleep(500);
+    await sleep(200);
 }
 
 /**
@@ -86,7 +85,7 @@ async function setCocktailSettings() {
     serial.write("cocktails");
     await sleep(200);
     serial.write(cocktailSettings);
-    await sleep(1000);
+    await sleep(200);
 }
 
 /**
@@ -101,24 +100,13 @@ server.get("/", (req, res) => {
 })
 
 server.post("/saveDrinks", async (req, res) => {
-    if(blocked){
-        res.status(200);
-        res.send("blocked");
-        return;
-    }
-    blocked = true;
-    drinks = JSON.parse(req.body)
-    await setDrinkSettings()
+    drinks = JSON.parse(req.body);
+    await setDrinkSettings();
     res.status(200);
     res.send("okay");
+    blocked = false;
 })
 server.post("/saveCocktails", async (req, res) => {
-    if(blocked){
-        res.status(200);
-        res.send("blocked");
-        return;
-    }
-    blocked = true;
     cocktails = JSON.parse(req.body)
     await setCocktailSettings()
     res.status(200);
@@ -131,8 +119,6 @@ server.post("/getDrinkSettings", (req, res) => {
 })
 
 server.post("/cmd", async (req, res) => {
-    serial.write("cmd");
-    await sleep(200);
     serial.write(req.body);
     await sleep(200);
     res.status(200);
@@ -196,24 +182,21 @@ console.log('Listening on http://' + ip + ':' + port);
 
 
 let blocked = true;
-let systemstart = false;
+let updatingSettings = false;
 
 let uart_input = async function(data) {
     // Will only execute once at machine start
-    if(data === "init" && !systemstart){
-        systemstart = true;
+    if(data === "init" && !updatingSettings){
+        updatingSettings = true;
         await setSettings();
+        updatingSettings = false;
     }
-    else if(data === "initialized"){
-        blocked = false;
-        systemstart = false;
-    }
-    else if(data === "unblock" && !systemstart){
+    else if(data === "unblock"){
         blocked = false;
     }
 }
 
-const parser = serial.pipe(new ReadlineParser({}))
+const parser = serial.pipe(new ReadlineParser({delimiter: '\n'}))
 parser.on('data', function(data) {
     data = data.replace(/\W/g, '')
     console.log(data);

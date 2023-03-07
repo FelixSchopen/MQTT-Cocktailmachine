@@ -410,9 +410,6 @@ let saveDrinksToMachine = function() {
                 drinks_save = JSON.parse(newDrinksJSON);
                 saveCocktailsToMachine();
             }
-            else if(response === "blocked"){
-                blockedAlert();
-            }
             else {
                 // server unable to save settings to machine
             }
@@ -443,10 +440,6 @@ let saveCocktailsToMachine = function() {
                 if(cancelButton != null){
                     cancelButton.click()
                 }
-            }
-            else if(response === "blocked"){
-                stopWaitingForResponse();
-                blockedAlert();
             }
             else {
                 // server unable to save settings to machine
@@ -537,7 +530,15 @@ let command = function(cmd){
         if (this.readyState === 4 && this.status === 200) {
             response = xhr.response;
             if (response === "okay") {
-                ons.notification.alert("Deadlock will get triggered on next Cocktail");
+                if(cmd === "deadlock"){
+                    ons.notification.alert("Deadlock will be triggered");
+                }
+                else if(cmd === "release"){
+                    ons.notification.alert("Deadlock will be released");
+                }
+                else if(cmd === "inversion"){
+                    ons.notification.alert("Priority inversion will be observable");
+                }
             }
         } else {
             // Server error

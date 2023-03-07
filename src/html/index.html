@@ -246,7 +246,13 @@
         <ons-list>
             <ons-list-header>Transitions</ons-list-header>
             <ons-list-item modifier="chevron" onclick="command('deadlock')">
-                Deadlock
+                Trigger deadlock
+            </ons-list-item>
+            <ons-list-item modifier="chevron" onclick="command('release')">
+                Release deadlock
+            </ons-list-item>
+            <ons-list-item modifier="chevron" onclick="command('inversion')">
+                Priority inversion
             </ons-list-item>
         </ons-list>
     </ons-page>
