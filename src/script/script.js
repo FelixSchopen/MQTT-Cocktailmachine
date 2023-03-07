@@ -69,6 +69,9 @@ let confirmCocktail = function(idx) {
                     timeout: 2000
                 })
             }
+            else if(response === "blocked"){
+                blockedAlert();
+            }
             else {
                 // server error response
             }
@@ -448,6 +451,10 @@ let saveCocktailsToMachine = function() {
     };
 }
 
+let blockedAlert = function() {
+    ons.notification.alert("Cocktailmachine not ready");
+}
+
 let editDrink = function(pos) {
     let name = "";
     if (drinks[pos] != null){
@@ -513,5 +520,30 @@ let getCurrentSettings = function (){
     cocktails_save = JSON.parse(cocktailSettings);
     cocktails = JSON.parse(cocktailSettings);
 }
+
+let command = function(cmd){
+    let xhr = new XMLHttpRequest();
+    xhr.open("POST", "cmd", true);
+    xhr.send(cmd);
+    let response;
+    xhr.onreadystatechange = function () {
+        if (this.readyState === 4 && this.status === 200) {
+            response = xhr.response;
+            if (response === "okay") {
+                if(cmd === "deadlock"){
+                    ons.notification.alert("Deadlock will be triggered");
+                }
+                else if(cmd === "release"){
+                    ons.notification.alert("Deadlock will be released");
+                }
+                else if(cmd === "inversion"){
+                    ons.notification.alert("Priority inversion will be observable");
+                }
+            }
+        } else {
+            // Server error
+        }
+    }
+};
 
 getCurrentSettings();

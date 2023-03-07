@@ -27,8 +27,6 @@ const cocktailSettingsFile = path.join(fileDirectory, "cocktails.json");
 let drinks = [];
 let cocktails = [];
 
-let blocked = false;
-
 /**
  * Writes string to file
  * @param path path to file
@@ -67,7 +65,7 @@ async function setDrinkSettings() {
     serial.write("drinks");
     await sleep(200);
     serial.write(drinkSettings);
-    await sleep(500);
+    await sleep(200);
 }
 
 /**
@@ -87,7 +85,7 @@ async function setCocktailSettings() {
     serial.write("cocktails");
     await sleep(200);
     serial.write(cocktailSettings);
-    await sleep(1000);
+    await sleep(200);
 }
 
 /**
@@ -102,10 +100,11 @@ server.get("/", (req, res) => {
 })
 
 server.post("/saveDrinks", async (req, res) => {
-    drinks = JSON.parse(req.body)
-    await setDrinkSettings()
+    drinks = JSON.parse(req.body);
+    await setDrinkSettings();
     res.status(200);
     res.send("okay");
+    blocked = false;
 })
 server.post("/saveCocktails", async (req, res) => {
     cocktails = JSON.parse(req.body)
@@ -119,17 +118,29 @@ server.post("/getDrinkSettings", (req, res) => {
     res.send(JSON.stringify(drinks));
 })
 
+server.post("/cmd", async (req, res) => {
+    serial.write(req.body);
+    await sleep(200);
+    res.status(200);
+    res.send("okay");
+})
+
 server.post("/getCocktailSettings", (req, res) => {
     res.status(200);
     res.send(JSON.stringify(cocktails));
 })
 
 server.post("/mixCocktail", async (req, res) => {
+    if(blocked){
+        res.status(200);
+        res.send("blocked");
+        return;
+    }
+    blocked = true;
     serial.write("mix");
     await sleep(200);
     serial.write(req.body);
     await sleep(200);
-
     res.status(200);
     res.send("okay");
 })
@@ -154,7 +165,7 @@ async function setSettings(){
     await setCocktailSettings();
 }
 
-let home = false;
+let home = true;
 let ip;
 let port = 8080;
 
@@ -167,29 +178,30 @@ else {
     server.listen(port, ip);
 }
 
-
 console.log('Listening on http://' + ip + ':' + port);
 
+
+let blocked = true;
+let updatingSettings = false;
+
 let uart_input = async function(data) {
-    if(data === "init"){
+    // Will only execute once at machine start
+    if(data === "init" && !updatingSettings){
+        updatingSettings = true;
         await setSettings();
-        console.log("success");
-    }
-    else if(data === "block"){
-        blocked = true;
+        updatingSettings = false;
     }
     else if(data === "unblock"){
         blocked = false;
     }
 }
 
-const parser = serial.pipe(new ReadlineParser({}))
+const parser = serial.pipe(new ReadlineParser({delimiter: '\n'}))
 parser.on('data', function(data) {
     data = data.replace(/\W/g, '')
     console.log(data);
     uart_input(data)
 })
-
 
 setSettings();
 
